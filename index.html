@@ -198,7 +198,7 @@ function App(){
   const [menu,      setMenu]      = useState(()=>ls("sahur_menu", DEFAULT_MENU));
   const [orders,    setOrders]    = useState(()=>ls("sahur_orders", []));
   const [santri,    setSantri]    = useState([]); // dari Google Sheets, tidak di-cache
-  const SHEETS_DEFAULT = "https://script.google.com/macros/s/AKfycbwEIk8S3MG2ouI41ZsV-M9oC27I8bUFvuB5V68FYz1OUblNkpkwO8eQTfPL5ZUbwkra/exec";
+  const SHEETS_DEFAULT = "https://script.google.com/macros/s/AKfycbyjmJ0GfxRe7oxUyTQAyqC4M43h0VBZy4-j31m3gqxAlek-0PkIg7df-gQzbPbuyabX/exec";
   const [sheetsUrl, setSheetsUrl] = useState(()=>ls("sahur_sheets_url", SHEETS_DEFAULT));
   const [sheetsSt,  setSheetsSt] = useState("idle"); // idle | loading | ok | err
   const [sheetMsg,  setSheetMsg] = useState("");
