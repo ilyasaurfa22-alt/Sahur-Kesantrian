@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Manajemen Sahur Kesantrian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#A3201F;--red2:#7A1717;--gold:#C9A227;--goldbg:#EFE0B0;--bg:#F7F1E2;--sfc:#FFFFFF;
+  --txt:#2B211B;--muted:#8A7A68;--ok:#2F7D4F;--okbg:#E6F2EA;--err:#B23A34;--errbg:#FBEAE9;--bdr:#EBE0C8;
+}
+body{background:#EDE3CE;min-height:100vh;font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt);padding:12px 0;}
+.app{background:var(--bg);max-width:720px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid #E7DCC4;box-shadow:0 4px 24px rgba(0,0,0,.10);}
+h1,h2,h3{font-family:'Lexend',sans-serif;}
+.hdr{background:var(--red);background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);background-size:14px 14px;padding:18px 18px 0;color:#fff;position:relative;}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold);}
+.hdr-row{display:flex;align-items:center;gap:10px;padding-bottom:14px;}
+.hdr-title{font-family:'Lexend',sans-serif;font-size:19px;font-weight:700;}
+.hdr-sub{font-size:12px;opacity:.85;margin-top:2px;}
+.tabs{display:flex;gap:4px;padding:8px 10px 0;background:var(--red);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:8px 11px;border-radius:9px 9px 0 0;font-size:12.5px;font-weight:700;cursor:pointer;color:rgba(255,255,255,.72);background:transparent;border:none;transition:all .15s;}
+.tab.on{background:var(--bg);color:var(--red2);}
+.tab svg{width:14px;height:14px;flex-shrink:0;}
+.body{padding:16px;min-height:300px;}
+.card{background:var(--sfc);border:1px solid var(--bdr);border-radius:12px;padding:13px;margin-bottom:11px;}
+.lbl{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;display:block;}
+.inp,.sel{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #DDD0AF;background:#FFFDF8;font-size:13.5px;color:var(--txt);font-family:inherit;}
+.inp:focus,.sel:focus{outline:none;border-color:var(--red);}
+.row{display:flex;gap:9px;flex-wrap:wrap;}
+.row>div{flex:1;min-width:130px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 13px;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn svg{width:13px;height:13px;flex-shrink:0;}
+.btn-red{background:var(--red);color:#fff;}.btn-red:hover{background:var(--red2);}
+.btn-gold{background:var(--gold);color:#3D2F06;}
+.btn-ghost{background:#F1E8D2;color:var(--txt);}
+.btn-danger{background:var(--errbg);color:var(--err);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed var(--bdr);font-size:13px;}
+.cart-item:last-child{border-bottom:none;}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding-top:9px;margin-top:3px;border-top:2px solid var(--gold);font-weight:700;font-size:14px;}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:inherit;}
+.badge-ok{background:var(--okbg);color:var(--ok);}
+.badge-err{background:var(--errbg);color:var(--err);}
+.ord-row{border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;margin-bottom:7px;background:#fff;}
+.ord-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.own-blk{border:1px solid var(--bdr);border-radius:10px;margin-bottom:9px;overflow:hidden;background:#fff;}
+.own-head{background:var(--goldbg);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--muted);padding:5px 9px;border-bottom:1px solid var(--bdr);}
+.tbl td{padding:6px 9px;border-bottom:1px solid #F2EAD6;}
+.tbl tr:last-child td{border-bottom:none;}
+.empty{text-align:center;padding:24px 10px;color:var(--muted);font-size:13px;}
+.empty svg{margin-bottom:6px;color:var(--muted);}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--txt);color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;z-index:50;display:flex;align-items:center;gap:7px;opacity:1;transition:opacity .3s;white-space:nowrap;}
+.toast.err{background:var(--err);}
+.toast.hide{opacity:0;}
+.toast svg{width:13px;height:13px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:11px;}
+.stat{background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:9px 11px;}
+.stat .n{font-size:17px;font-weight:700;font-family:'Lexend',sans-serif;}
+.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;}
+.ibtn{background:none;border:none;cursor:pointer;color:var(--muted);padding:3px;border-radius:5px;}
+.ibtn:hover{background:#F1E8D2;color:var(--txt);}
+.ibtn svg{width:13px;height:13px;}
+.ac-wrap{position:relative;}
+.ac-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid var(--bdr);border-radius:9px;z-index:20;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.ac-item{padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #F2EAD6;}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.hi{background:var(--goldbg);}
+.ac-name{font-weight:700;}
+.ac-meta{font-size:11.5px;color:var(--muted);margin-top:1px;}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--goldbg);border:1px solid var(--gold);border-radius:8px;padding:5px 10px;font-size:13px;margin-bottom:8px;}
+.chip .cn{font-weight:700;}
+.chip .cm{font-size:11.5px;color:var(--muted);}
+.chip svg{width:14px;height:14px;color:#C9A227;}
+.sel-menu-wrap select option:nth-child(odd){background:#F5F5F5;}
+.sel-menu-wrap select option:nth-child(even){background:#FFFFFF;}
+.dropzone{border:2px dashed var(--gold);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;background:#FFFDF8;transition:background .15s;}
+.dropzone.over{background:var(--goldbg);}
+.dropzone svg{color:var(--gold);display:block;margin:0 auto;}
+.kamar-blk{border:1px solid var(--bdr);border-radius:10px;margin-bottom:10px;overflow:hidden;background:#fff;}
+.kamar-head{background:var(--goldbg);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;}
+.kamar-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #F2EAD6;font-size:13px;}
+.kamar-row:last-child{border-bottom:none;}
+.dot-pesan{width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px;}
+.dot-belum{width:9px;height:9px;border-radius:50%;background:#D1D5DB;display:inline-block;margin-right:6px;}
+.tbl-scroll{overflow-x:auto;}
+.kamar-pill{display:inline-block;background:var(--goldbg);color:#3D2F06;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;}
+.kelas-pill{display:inline-block;background:#E6F2EA;color:#2F7D4F;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;}
+.inp-wrap{position:relative;}
+.inp-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);width:13px;height:13px;pointer-events:none;}
+.inp-wrap .inp{padding-left:28px;}
+.tab-panel{display:none;}.tab-panel.on{display:block;}
+@media(max-width:480px){.hdr-title{font-size:15px;}.tab{font-size:11px;padding:7px 8px;}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-row">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      <div>
+        <div class="hdr-title">Manajemen Sahur Kesantrian</div>
+        <div class="hdr-sub">Pendataan pesanan &middot; pembagian ke pemilik menu</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-tab="input" onclick="switchTab('input')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        Input Pesanan
+      </button>
+      <button class="tab" data-tab="rekap" onclick="switchTab('rekap')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        Rekap Harian
+      </button>
+      <button class="tab" data-tab="laporan" onclick="switchTab('laporan')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Laporan Pemilik
+      </button>
+      
+      <button class="tab" data-tab="kamar" onclick="switchTab('kamar')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Laporan Kamar
+      </button>
+      <button class="tab" data-tab="kelola" onclick="switchTab('kelola')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Kelola Menu
+      </button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- TAB: INPUT PESANAN -->
+    <div class="tab-panel on" id="panel-input">
+      <div class="card">
+        <div class="row">
+          <div style="max-width:180px">
+            <span class="lbl">Tanggal</span>
+            <input type="date" class="inp" id="inp-date"/>
+          </div>
+          <div style="flex:2">
+            <span class="lbl" id="lbl-cari">Nama pemesan</span>
+            <div id="picked-chip" style="display:none" class="chip">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+              <div><div class="cn" id="chip-nama"></div><div class="cm" id="chip-meta"></div></div>
+              <button class="ibtn" onclick="clearPick()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="ac-wrap" id="ac-wrap">
+              <div class="inp-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="inp" id="inp-santri" placeholder="Ketik nama, kamar, atau kelas..." oninput="onSantriInput()" onkeydown="onSantriKey(event)" onblur="setTimeout(closeAcDrop,150)"/>
+              </div>
+              <div class="ac-drop" id="ac-drop" style="display:none"></div>
+            </div>
+            <div id="hint-santri" style="font-size:11.5px;color:var(--muted);margin-top:4px;display:none">
+              Memuat data santri...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">Tambah menu</span>
+        <div class="row" style="align-items:flex-end">
+          <div style="flex:2">
+            <select class="sel" id="sel-menu" onchange="onMenuChange()"></select>
+          </div>
+          <div id="variant-wrap" style="display:none">
+            <select class="sel" id="sel-variant"></select>
+          </div>
+          <div style="max-width:80px">
+            <input type="number" min="1" class="inp" id="inp-qty" value="1"/>
+          </div>
+          <div style="flex:0 0 auto">
+            <button class="btn btn-gold" onclick="addToCart()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Tambah
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">Keranjang</span>
+        <div id="cart-list"><div class="empty">Belum ada item.</div></div>
+        <div class="total-row"><span>Total</span><span id="cart-total">Rp0</span></div>
+      </div>
+
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+        <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;cursor:pointer">
+          <input type="checkbox" id="chk-paid" checked/> Sudah lunas
+        </label>
+        <button class="btn btn-red" onclick="submitOrder()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Simpan pesanan
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB: REKAP HARIAN -->
+    <div class="tab-panel" id="panel-rekap">
+      <div class="card">
+        <span class="lbl">Pilih tanggal</span>
+        <input type="date" class="inp" id="rekap-date" style="max-width:200px" oninput="renderRekap()"/>
+      </div>
+      <div class="stat-grid" id="rekap-stats"></div>
+      <div class="card">
+        <span class="lbl" id="rekap-menu-lbl">Rekap per menu</span>
+        <div id="rekap-menu-tbl"></div>
+      </div>
+      <div class="card">
+        <span class="lbl">Daftar pesanan</span>
+        <div id="rekap-orders"></div>
+      </div>
+    </div>
+
+    <!-- TAB: LAPORAN PEMILIK -->
+    <div class="tab-panel" id="panel-laporan">
+      <div class="card">
+        <div class="row" style="margin-bottom:8px;flex-wrap:wrap;">
+          <button class="btn btn-red" data-mode="single" onclick="setLaporanMode('single')">Satu hari</button>
+          <button class="btn btn-ghost" data-mode="range" onclick="setLaporanMode('range')">Rentang tanggal</button>
+          <button class="btn btn-ghost" data-mode="all" onclick="setLaporanMode('all')">Semua data</button>
+        </div>
+        <div id="laporan-date-single">
+          <input type="date" class="inp" id="laporan-date" style="max-width:200px" oninput="renderLaporan()"/>
+        </div>
+        <div id="laporan-date-range" style="display:none">
+          <div class="row">
+            <div><span class="lbl">Dari</span><input type="date" class="inp" id="laporan-from" oninput="renderLaporan()"/></div>
+            <div><span class="lbl">Sampai</span><input type="date" class="inp" id="laporan-to" oninput="renderLaporan()"/></div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-grid" id="laporan-stats"></div>
+      <div id="laporan-owners"></div>
+    </div>
+
+    <!-- TAB: KELOLA MENU -->
+    <div class="tab-panel" id="panel-kamar" style="display:none;">
+  <div class="card">
+    <label class="lbl">Pilih Tanggal</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <input type="date" class="inp" id="kamar-date" style="max-width:180px;" oninput="renderKamarPage()"/>
+      <button class="btn btn-ghost" onclick="setKamarDate(-1)">&#8592; Kemarin</button>
+      <button class="btn btn-ghost" onclick="setKamarDate(0)">Hari Ini</button>
+    </div>
+  </div>
+  <div id="kamar-content"></div>
+</div>
+
+<div class="tab-panel" id="panel-kelola">
+      <div id="kelola-dirty-bar" style="display:none" class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--goldbg);border-radius:10px;padding:8px 12px">
+          <span style="font-size:13px;font-weight:700">Ada perubahan belum disimpan.</span>
+          <button class="btn btn-red" onclick="saveMenuDraft()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Simpan
+          </button>
+        </div>
+      </div>
+      <div id="kelola-cats"></div>
+      <datalist id="own-list"></datalist>
+      <div class="card">
+        <button class="btn btn-ghost" id="btn-show-add-menu" onclick="toggleAddMenu()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah menu baru
+        </button>
+        <div id="add-menu-form" style="display:none">
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:2"><input class="inp" id="new-menu-name" placeholder="Nama menu"/></div>
+            <div>
+              <select class="sel" id="new-menu-cat">
+                <option>Utama</option><option>Tambahan</option><option>Minuman</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div><input class="inp" list="own-list" id="new-menu-owner" placeholder="Pemilik resep"/></div>
+            <div style="max-width:130px"><input type="number" class="inp" id="new-menu-price" placeholder="Harga"/></div>
+            <button class="btn btn-red" onclick="addMenuNew()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Tambah
+            </button>
+            <button class="btn btn-ghost" onclick="toggleAddMenu()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Batal
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast" style="display:none"></div>
+
+<script>
+// ─── DATA & STORAGE ───────────────────────────────────────────────────────────
+const DEFAULT_MENU=[
+  {id:"m7",  name:"Dumpling Ayam",              category:"Utama",    owner:"Ust Ilyasa", price:10000},
+  {id:"m10", name:"Dumpling Sapi Keju",          category:"Utama",    owner:"Ust Ilyasa", price:15000},
+  {id:"m5",  name:"Nasi Ayam Geprek",            category:"Utama",    owner:"Ust Yanto",  price:13000},
+  {id:"m24", name:"Nasi Ikan Balado",              category:"Utama",    owner:"Ust Yanto",  price:13000},
+  {id:"m8",  name:"Nasi Chicken Pop Corn",       category:"Utama",    owner:"Ust Sidik",  price:18000},
+  {id:"m9",  name:"Nasi Indomie Telur",          category:"Utama",    owner:"Ust Soleh",  price:15000},
+  {id:"m20", name:"Nasi Jeruk Telur Orak Arik",  category:"Utama",    owner:"Ust Ilyasa", price:10000},
+  {id:"m3",  name:"Nasi Kebuli Ayam",            category:"Utama",    owner:"Ust Wildan", price:13000},
+  {id:"m21", name:"Nasi Kepal Ayam Suwir",       category:"Utama",    owner:"Ust Afif",   price:10000},
+  {id:"m6",  name:"Nasi Soto Ayam",              category:"Utama",    owner:"Ust Wildan", price:15000},
+  {id:"m18", name:"Nasi Telur Dadar Krispi",     category:"Utama",    owner:"Ust Falih",  price:10000},
+  {id:"m2",  name:"Nasi Telur Pontianak",        category:"Utama",    owner:"Ust Ilyasa", price:10000},
+  {id:"m11", name:"Pecel Ayam",                  category:"Utama",    owner:"Ust Ibrohim",price:18000},
+  {id:"m22", name:"Ricebowl Ayam Barbeque",      category:"Utama",    owner:"Ust Afif",   price:15000},
+  {id:"m12", name:"Nasi Putih",                  category:"Tambahan", owner:"Ust Ilyasa", price:5000},
+  {id:"m19", name:"Sup Tahu",                    category:"Tambahan", owner:"Ust Falih",  price:5000},
+  {id:"m13", name:"Telur Ceplok",                category:"Tambahan", owner:"Ust Ilyasa", price:5000},
+  {id:"m23", name:"Cappuccino Coffee Hangat/Ice",category:"Minuman",  owner:"Ust Afif",   price:7000},
+  {id:"m15", name:"Susu Jahe Panas",             category:"Minuman",  owner:"Ust Ilyasa", price:10000},
+  {id:"m17", name:"Susu Manis Hangat",           category:"Minuman",  owner:"Ust Azman",  price:5000},
+  {id:"m16", name:"Teh Manis Hangat",            category:"Minuman",  owner:"Ust Azman",  price:3000},
+];
+const CATS=["Utama","Tambahan","Minuman"];
+
+function lsLoad(key,def){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function lsSave(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); }catch(e){ showToast("Gagal menyimpan data.","err"); } }
+
+let menu   = lsLoad("sahur-menu-v1",  DEFAULT_MENU);
+let orders = lsLoad("sahur-orders-v1",[]);
+let santri = lsLoad("sahur-santri-v1",[]);
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function todayStr(){ const d=new Date(),off=d.getTimezoneOffset(); return new Date(d.getTime()-off*60000).toISOString().slice(0,10); }
+function fmtRp(n){ return "Rp"+Math.round(Number(n)||0).toLocaleString("id-ID"); }
+function fmtDate(iso){ if(!iso)return""; const [y,m,d]=iso.split("-"); return d+" "+["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"][+m-1]+" "+y; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function menuPrice(item,variantLabel){ if(item.variants) return (item.variants.find(v=>v.label===variantLabel)||{}).price||0; return item.price; }
+function getOwners(){ return [...new Set(menu.map(m=>m.owner))].sort(); }
+function escHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+var toastTimer;
+function showToast(msg,type){
+  type=type||"ok";
+  var t=document.getElementById("toast");
+  t.style.display="flex";
+  t.className="toast"+(type==="err"?" err":"");
+  t.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> '+msg;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.add("hide"); setTimeout(function(){ t.style.display="none"; t.classList.remove("hide"); },300); },2400);
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("on",b.dataset.tab===tab); });
+  document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.toggle("on",p.id==="panel-"+tab); });
+  if(tab==="rekap")   renderRekap();
+  if(tab==="laporan") renderLaporan();
+  if(tab==="santri")  renderSantriPage();
+  if(tab==="kamar"){
+    document.getElementById("kamar-date").value=todayStr();
+    renderKamarPage();
+  }
+  if(tab==="kelola")  renderKelola();
+}
+
+// ─── INPUT TAB ───────────────────────────────────────────────────────────────
+var cart=[];
+var pickedSantri=null;
+var acHiIdx=0;
+var acSuggestions=[];
+
+function initInput(){
+  document.getElementById("inp-date").value=todayStr();
+  renderMenuSelect();
+  updateCartUI();
+  updateSantriHint();
+}
+
+function renderMenuSelect(){
+  var sel=document.getElementById("sel-menu");
+  sel.innerHTML="";
+  CATS.forEach(function(cat){
+    var grp=document.createElement("optgroup");
+    grp.label=cat;
+    menu.filter(function(m){ return m.category===cat; }).forEach(function(m){
+      var o=document.createElement("option");
+      o.value=m.id;
+      o.textContent=m.name+(m.price?" \u2014 "+fmtRp(m.price):"");
+      grp.appendChild(o);
+    });
+    if(grp.children.length) sel.appendChild(grp);
+  });
+  onMenuChange();
+}
+
+function onMenuChange(){
+  var id=document.getElementById("sel-menu").value;
+  var m=menu.find(function(x){ return x.id===id; });
+  var vw=document.getElementById("variant-wrap");
+  var sv=document.getElementById("sel-variant");
+  if(m&&m.variants){
+    vw.style.display="";
+    sv.innerHTML=m.variants.map(function(v){ return '<option value="'+escHtml(v.label)+'">'+escHtml(v.label)+' \u2014 '+fmtRp(v.price)+'</option>'; }).join("");
+  } else {
+    vw.style.display="none"; sv.innerHTML="";
+  }
+}
+
+function addToCart(){
+  var id=document.getElementById("sel-menu").value;
+  var m=menu.find(function(x){ return x.id===id; }); if(!m) return;
+  var variantLabel=m.variants?document.getElementById("sel-variant").value:null;
+  var price=menuPrice(m,variantLabel);
+  var qty=Math.max(1,Number(document.getElementById("inp-qty").value)||1);
+  cart.push({key:uid(),menuId:m.id,name:m.name,variant:variantLabel,owner:m.owner,unitPrice:price,qty:qty});
+  document.getElementById("inp-qty").value=1;
+  updateCartUI();
+}
+
+function removeCartItem(key){ cart=cart.filter(function(i){ return i.key!==key; }); updateCartUI(); }
+
+function updateCartUI(){
+  var list=document.getElementById("cart-list");
+  var total=cart.reduce(function(s,i){ return s+i.unitPrice*i.qty; },0);
+  document.getElementById("cart-total").textContent=fmtRp(total);
+  if(cart.length===0){ list.innerHTML='<div class="empty">Belum ada item.</div>'; return; }
+  list.innerHTML=cart.map(function(i){
+    return '<div class="cart-item"><span>'+escHtml(i.name)+(i.variant?' ('+escHtml(i.variant)+')':'')+' \xd7 '+i.qty+'</span>'
+      +'<span style="display:flex;align-items:center;gap:9px">'+fmtRp(i.unitPrice*i.qty)
+      +' <button class="ibtn" onclick="removeCartItem(\''+i.key+'\')">'
+      +'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'
+      +'</button></span></div>';
+  }).join("");
+}
+
+function submitOrder(){
+  if(cart.length===0){ showToast("Keranjang masih kosong.","err"); return; }
+  var customer=pickedSantri?pickedSantri.nama:document.getElementById("inp-santri").value.trim();
+  if(!customer){ showToast("Nama pemesan belum diisi.","err"); return; }
+  var total=cart.reduce(function(s,i){ return s+i.unitPrice*i.qty; },0);
+  var order={
+    id:uid(),
+    date:document.getElementById("inp-date").value,
+    customer:customer,
+    kamar:pickedSantri?pickedSantri.kamar:"",
+    kelas:pickedSantri?pickedSantri.kelas:"",
+    paid:document.getElementById("chk-paid").checked,
+    items:cart.map(function(i){ return {menuId:i.menuId,name:i.name,variant:i.variant,owner:i.owner,unitPrice:i.unitPrice,qty:i.qty}; }),
+    total:total,
+    createdAt:Date.now()
+  };
+  orders=orders.concat([order]);
+  lsSave("sahur-orders-v1",orders);
+  cart=[]; pickedSantri=null;
+  document.getElementById("inp-santri").value="";
+  saveOrderToSheets(order);
+  document.getElementById("picked-chip").style.display="none";
+  document.getElementById("ac-wrap").style.display="";
+  document.getElementById("chk-paid").checked=true;
+  updateCartUI();
+  showToast("Pesanan tersimpan.");
+}
+
+// Autocomplete santri
+function updateSantriHint(){
+  var has=santri.length>0;
+  document.getElementById("lbl-cari").textContent=has?"Cari santri":"Nama pemesan";
+  document.getElementById("inp-santri").placeholder=has?"Ketik nama, kamar, atau kelas...":"Nama pemesan";
+  document.getElementById("hint-santri").style.display=has?"none":"block";
+}
+
+function onSantriInput(){
+  var q=document.getElementById("inp-santri").value.toLowerCase().trim();
+  if(!q||pickedSantri){ acSuggestions=[]; closeAcDrop(); return; }
+  acSuggestions=santri.filter(function(s){
+    return s.nama.toLowerCase().indexOf(q)>=0||s.kamar.toLowerCase().indexOf(q)>=0||s.kelas.toLowerCase().indexOf(q)>=0;
+  }).slice(0,8);
+  acHiIdx=0;
+  renderAcDrop();
+}
+
+function renderAcDrop(){
+  var drop=document.getElementById("ac-drop");
+  if(!acSuggestions.length){ drop.style.display="none"; return; }
+  drop.style.display="";
+  drop.innerHTML=acSuggestions.map(function(s,i){
+    return '<div class="ac-item'+(i===acHiIdx?" hi":"")+'" onmousedown="pickSantri('+i+')">'
+      +'<div class="ac-name">'+escHtml(s.nama)+'</div>'
+      +'<div class="ac-meta">Kamar '+escHtml(s.kamar)+' &middot; '+escHtml(s.kelas)+'</div></div>';
+  }).join("");
+}
+
+function closeAcDrop(){ document.getElementById("ac-drop").style.display="none"; }
+
+function pickSantri(idx){
+  var s=acSuggestions[idx]; if(!s) return;
+  pickedSantri=s;
+  document.getElementById("inp-santri").value=s.nama;
+  document.getElementById("ac-drop").style.display="none";
+  document.getElementById("ac-wrap").style.display="none";
+  var chip=document.getElementById("picked-chip");
+  chip.style.display="";
+  document.getElementById("chip-nama").textContent=s.nama;
+  document.getElementById("chip-meta").textContent="Kamar "+s.kamar+" \u00b7 "+s.kelas;
+}
+
+function clearPick(){
+  pickedSantri=null;
+  document.getElementById("inp-santri").value="";
+  document.getElementById("picked-chip").style.display="none";
+  document.getElementById("ac-wrap").style.display="";
+  document.getElementById("inp-santri").focus();
+}
+
+function onSantriKey(e){
+  if(!acSuggestions.length) return;
+  if(e.key==="ArrowDown"){ e.preventDefault(); acHiIdx=Math.min(acHiIdx+1,acSuggestions.length-1); renderAcDrop(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); acHiIdx=Math.max(acHiIdx-1,0); renderAcDrop(); }
+  else if(e.key==="Enter"&&acSuggestions[acHiIdx]) pickSantri(acHiIdx);
+  else if(e.key==="Escape") closeAcDrop();
+}
+
+// ─── REKAP HARIAN ─────────────────────────────────────────────────────────────
+function renderRekap(){
+  var date=document.getElementById("rekap-date").value||todayStr();
+  document.getElementById("rekap-date").value=date;
+  var dayOrders=orders.filter(function(o){ return o.date===date; });
+  var totalAll=dayOrders.reduce(function(s,o){ return s+o.total; },0);
+  var totalPaid=dayOrders.filter(function(o){ return o.paid; }).reduce(function(s,o){ return s+o.total; },0);
+  document.getElementById("rekap-stats").innerHTML=
+    '<div class="stat"><div class="n">'+fmtRp(totalAll)+'</div><div class="l">Total pesanan</div></div>'
+    +'<div class="stat"><div class="n" style="color:var(--ok)">'+fmtRp(totalPaid)+'</div><div class="l">Sudah lunas</div></div>'
+    +'<div class="stat"><div class="n" style="color:var(--err)">'+fmtRp(totalAll-totalPaid)+'</div><div class="l">Belum lunas</div></div>'
+    +'<div class="stat"><div class="n">'+dayOrders.length+'</div><div class="l">Pemesan</div></div>';
+
+  var perMenu={};
+  dayOrders.forEach(function(o){ o.items.forEach(function(it){
+    var k=it.name+(it.variant?" ("+it.variant+")":"");
+    if(!perMenu[k]) perMenu[k]={qty:0,subtotal:0};
+    perMenu[k].qty+=it.qty; perMenu[k].subtotal+=it.unitPrice*it.qty;
+  }); });
+  document.getElementById("rekap-menu-lbl").textContent="Rekap per menu \u2014 "+fmtDate(date);
+  var keys=Object.keys(perMenu);
+  document.getElementById("rekap-menu-tbl").innerHTML=keys.length===0
+    ?'<div class="empty">Belum ada pesanan.</div>'
+    :'<table class="tbl"><thead><tr><th>Menu</th><th>Qty</th><th>Subtotal</th></tr></thead><tbody>'
+    +keys.map(function(k){ return '<tr><td>'+escHtml(k)+'</td><td>'+perMenu[k].qty+'</td><td>'+fmtRp(perMenu[k].subtotal)+'</td></tr>'; }).join("")
+    +'</tbody></table>';
+
+  document.getElementById("rekap-orders").innerHTML=dayOrders.length===0
+    ?'<div class="empty">Belum ada pesanan.</div>'
+    :dayOrders.map(function(o){
+      return '<div class="ord-row"><div class="ord-head"><div>'
+        +'<div style="font-weight:700;font-size:14px">'+escHtml(o.customer)+'</div>'
+        +((o.kamar||o.kelas)?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px">'+(o.kamar?'<span class="kamar-pill" style="margin-right:4px">Kamar '+escHtml(o.kamar)+'</span>':'')+(o.kelas?'<span class="kelas-pill">'+escHtml(o.kelas)+'</span>':'')+'</div>':"")
+        +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+o.items.map(function(it){ return escHtml(it.name)+(it.variant?" ("+escHtml(it.variant)+")":"")+" x"+it.qty; }).join(", ")+'</div>'
+        +'</div><div style="text-align:right;flex-shrink:0">'
+        +'<div style="font-weight:700;font-size:14px">'+fmtRp(o.total)+'</div>'
+        +'<button class="badge '+(o.paid?"badge-ok":"badge-err")+'" onclick="togglePaid(\''+o.id+'\')" style="margin-top:4px">'+(o.paid?"\u2713 Lunas":"\u2717 Belum lunas")+'</button>'
+        +'</div></div><div style="text-align:right;margin-top:4px">'
+        +'<button class="ibtn" onclick="removeOrder(\''+o.id+'\')">'
+        +'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'
+        +'</button></div></div>';
+    }).join("");
+}
+
+function togglePaid(id){ orders=orders.map(function(o){ return o.id===id?Object.assign({},o,{paid:!o.paid}):o; }); lsSave("sahur-orders-v1",orders); renderRekap(); }
+function removeOrder(id){ orders=orders.filter(function(o){ return o.id!==id; }); lsSave("sahur-orders-v1",orders); renderRekap(); }
+
+// ─── LAPORAN PEMILIK ─────────────────────────────────────────────────────────
+var laporanMode="single";
+function setLaporanMode(m){
+  laporanMode=m;
+  document.querySelectorAll("#panel-laporan .btn[data-mode]").forEach(function(b){ b.className="btn "+(b.dataset.mode===m?"btn-red":"btn-ghost"); });
+  document.getElementById("laporan-date-single").style.display=m==="single"?"":"none";
+  document.getElementById("laporan-date-range").style.display=m==="range"?"":"none";
+  renderLaporan();
+}
+
+// Simpan data laporan per pemilik untuk fungsi copy
+var _laporanByOwner={};
+var _laporanLabel="";
+
+function renderLaporan(){
+  var date=document.getElementById("laporan-date").value||todayStr();
+  var from=document.getElementById("laporan-from").value||todayStr();
+  var to=document.getElementById("laporan-to").value||todayStr();
+  document.getElementById("laporan-date").value=date;
+
+  if(laporanMode==="single") _laporanLabel=fmtDate(date);
+  else if(laporanMode==="range") _laporanLabel=fmtDate(from)+" s/d "+fmtDate(to);
+  else _laporanLabel="Semua data";
+
+  var filtered=orders.filter(function(o){
+    if(laporanMode==="single") return o.date===date;
+    if(laporanMode==="range")  return o.date>=from && o.date<=to;
+    return true;
+  });
+
+  var owners=getOwners();
+  var byOwner={};
+  owners.forEach(function(o){ byOwner[o]={items:{},orders:[],total:0}; });
+
+  filtered.forEach(function(o){
+    o.items.forEach(function(it){
+      if(!byOwner[it.owner]) byOwner[it.owner]={items:{},orders:[],total:0};
+      var k=it.name+(it.variant?" ("+it.variant+")":"");
+      if(!byOwner[it.owner].items[k]) byOwner[it.owner].items[k]={qty:0,subtotal:0};
+      byOwner[it.owner].items[k].qty+=it.qty;
+      byOwner[it.owner].items[k].subtotal+=it.unitPrice*it.qty;
+      byOwner[it.owner].total+=it.unitPrice*it.qty;
+
+      // catat pesanan santri untuk pemilik ini
+      var existing=byOwner[it.owner].orders.find(function(x){ return x.orderId===o.id; });
+      if(!existing){
+        byOwner[it.owner].orders.push({
+          orderId:o.id,
+          customer:o.customer,
+          kamar:o.kamar||"",
+          kelas:o.kelas||"",
+          date:o.date,
+          paid:o.paid,
+          menuList:[],
+          subtotal:0
+        });
+        existing=byOwner[it.owner].orders[byOwner[it.owner].orders.length-1];
+      }
+      existing.menuList.push(it.name+(it.variant?" ("+it.variant+")":"")+" x"+it.qty);
+      existing.subtotal+=it.unitPrice*it.qty;
+    });
+  });
+
+  _laporanByOwner=byOwner;
+
+  var grandTotal=filtered.reduce(function(s,o){ return s+o.total; },0);
+  var ownerList=Object.keys(byOwner).filter(function(o){ return byOwner[o].total>0; }).sort(function(a,b){ return byOwner[b].total-byOwner[a].total; });
+
+  document.getElementById("laporan-stats").innerHTML=
+    '<div class="stat"><div class="n">'+fmtRp(grandTotal)+'</div><div class="l">Total keseluruhan</div></div>'
+    +'<div class="stat"><div class="n">'+filtered.length+'</div><div class="l">Jumlah pesanan</div></div>'
+    +'<div class="stat"><div class="n">'+ownerList.length+'</div><div class="l">Pemilik menu terjual</div></div>';
+
+  document.getElementById("laporan-owners").innerHTML=ownerList.length===0
+    ?'<div class="empty">Belum ada data untuk periode ini.</div>'
+    :ownerList.map(function(owner){
+      var d=byOwner[owner];
+      // Tabel ringkasan menu
+      var menuTbl='<table class="tbl"><thead><tr><th>Menu</th><th>Qty</th><th>Subtotal</th></tr></thead><tbody>'
+        +Object.entries(d.items).map(function(e){ return '<tr><td>'+escHtml(e[0])+'</td><td>'+e[1].qty+'</td><td>'+fmtRp(e[1].subtotal)+'</td></tr>'; }).join("")
+        +'</tbody></table>';
+      // Daftar santri per pemilik
+      var santriRows=d.orders.map(function(ord){
+        var meta=[];
+        if(ord.kamar) meta.push('Kamar '+escHtml(ord.kamar));
+        if(ord.kelas) meta.push(escHtml(ord.kelas));
+        return '<div style="padding:7px 0;border-bottom:1px dashed var(--bdr);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+          +'<div>'
+          +'<div style="font-weight:700;font-size:13px">'+escHtml(ord.customer)+'</div>'
+          +(meta.length?'<div style="font-size:11.5px;color:var(--muted);margin-top:1px">'+meta.join(' &middot; ')+'</div>':'')
+          +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+escHtml(ord.menuList.join(', '))+'</div>'
+          +'</div>'
+          +'<div style="text-align:right;flex-shrink:0;font-size:13px;font-weight:700">'+fmtRp(ord.subtotal)+'</div>'
+          +'</div>';
+      }).join("");
+
+      var ownKey=owner.replace(/[^a-zA-Z0-9]/g,"_");
+      return '<div class="own-blk">'
+        +'<div class="own-head">'
+          +'<span style="font-weight:700;font-size:14px">'+escHtml(owner)+'</span>'
+          +'<span style="font-weight:700;font-size:14px">'+fmtRp(d.total)+'</span>'
+        +'</div>'
+        // Ringkasan menu
+        +menuTbl
+        // Daftar santri
+        +'<div style="padding:8px 12px 0">'
+          +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Detail pesanan santri</div>'
+          +santriRows
+        +'</div>'
+        // Tombol copy per pemilik
+        +'<div style="padding:10px 12px">'
+          +'<button class="btn btn-ghost" style="font-size:12px;padding:6px 11px" onclick="copyLaporan(\''+escHtml(ownKey)+'\')" id="copybtn-'+escHtml(ownKey)+'">'
+            +'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>'
+            +'Salin untuk WhatsApp'
+          +'</button>'
+        +'</div>'
+        +'</div>';
+    }).join("");
+}
+
+function copyLaporan(ownKey){
+  // Cari owner dari key
+  var owner=Object.keys(_laporanByOwner).find(function(o){ return o.replace(/[^a-zA-Z0-9]/g,"_")===ownKey; });
+  if(!owner) return;
+  var d=_laporanByOwner[owner];
+
+  var lines=[];
+  lines.push("*Laporan Sahur \u2014 "+owner+"*");
+  lines.push("Periode: "+_laporanLabel);
+  lines.push("");
+  lines.push("*Ringkasan Menu:*");
+  Object.entries(d.items).forEach(function(e){
+    lines.push("  "+e[0]+" \u00d7"+e[1].qty+" = "+fmtRp(e[1].subtotal));
+  });
+  lines.push("*TOTAL: "+fmtRp(d.total)+"*");
+  lines.push("");
+  lines.push("*Detail Pesanan:*");
+  d.orders.forEach(function(ord,i){
+    var meta=[];
+    if(ord.kamar) meta.push("Kamar "+ord.kamar);
+    if(ord.kelas) meta.push(ord.kelas);
+    lines.push((i+1)+". "+ord.customer+(meta.length?" ("+meta.join(", ")+")":""));
+    lines.push("   "+ord.menuList.join(", ")+" \u2192 "+fmtRp(ord.subtotal));
+  });
+
+  var text=lines.join("\n");
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      showToast("Teks "+owner+" disalin!");
+      var btn=document.getElementById("copybtn-"+ownKey);
+      if(btn){ btn.textContent="\u2713 Tersalin!"; setTimeout(function(){ btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Salin untuk WhatsApp'; },2000); }
+    });
+  } else {
+    // Fallback
+    var ta=document.createElement("textarea");
+    ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+    showToast("Teks "+owner+" disalin!");
+  }
+}
+
+// ─── DATA SANTRI ─────────────────────────────────────────────────────────────
+function setKamarDate(offset){
+  var d=new Date();
+  d.setDate(d.getDate()+offset);
+  document.getElementById("kamar-date").value=d.toISOString().slice(0,10);
+  renderKamarPage();
+}
+
+function renderKamarPage(){
+  var dateEl=document.getElementById("kamar-date");
+  if(!dateEl) return;
+  var date=dateEl.value||todayStr();
+  var dayOrders=orders.filter(function(o){ return o.date===date; });
+
+  // Kumpulkan santri yang sudah pesan
+  var sudahPesan={};
+  dayOrders.forEach(function(o){
+    sudahPesan[o.customer]={total:o.total,menu:o.items.map(function(it){
+      return it.name+(it.variant?" ("+it.variant+")":"")+" x"+it.qty;
+    }).join(", "),paid:o.paid};
+  });
+
+  // Kelompokkan santri per kamar
+  var perKamar={};
+  santri.forEach(function(s){
+    var k=s.kamar||"Tanpa Kamar";
+    if(!perKamar[k]) perKamar[k]={list:[],sudah:0,belum:0};
+    var info=sudahPesan[s.nama];
+    perKamar[k].list.push({nama:s.nama,kelas:s.kelas,info:info||null});
+    if(info) perKamar[k].sudah++; else perKamar[k].belum++;
+  });
+
+  var kamarKeys=Object.keys(perKamar).sort(function(a,b){
+    return a.localeCompare(b,undefined,{numeric:true});
+  });
+
+  var html="";
+  if(santri.length===0){
+    html='<div class="empty">Data santri belum dimuat.<br/>Pastikan koneksi internet aktif.</div>';
+  } else if(kamarKeys.length===0){
+    html='<div class="empty">Tidak ada data kamar.</div>';
+  } else {
+    kamarKeys.forEach(function(kamar){
+      var data=perKamar[kamar];
+      var pct=Math.round(data.sudah/data.list.length*100);
+      html+='<div class="kamar-blk">';
+      html+='<div class="kamar-head">';
+      html+='<span>&#127968; Kamar '+kamar+'</span>';
+      html+='<span style="font-size:12px;font-weight:600;">'+data.sudah+'/'+data.list.length+' pesan &nbsp;';
+      html+='<span style="background:'+(pct===100?'var(--ok)':pct>0?'var(--gold)':'#D1D5DB')+';color:#fff;padding:2px 8px;border-radius:999px;font-size:11px;">'+pct+'%</span></span>';
+      html+='</div>';
+      data.list.forEach(function(s){
+        html+='<div class="kamar-row">';
+        html+='<div>';
+        html+='<span class="'+(s.info?"dot-pesan":"dot-belum")+'"></span>';
+        html+='<strong>'+s.nama+'</strong>';
+        if(s.kelas) html+=' <span class="kelas-pill">'+s.kelas+'</span>';
+        if(s.info){
+          html+='<div style="font-size:11.5px;color:var(--muted);margin-top:2px;padding-left:15px;">'+s.info.menu+'</div>';
+        }
+        html+='</div>';
+        html+='<div style="text-align:right;flex-shrink:0;margin-left:8px;">';
+        if(s.info){
+          html+='<div style="font-weight:700;font-size:13px;">'+fmtRp(s.info.total)+'</div>';
+          html+='<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:'+(s.info.paid?"var(--okbg)":"var(--errbg)")+';color:'+(s.info.paid?"var(--ok)":"var(--err)")+';">'+(s.info.paid?"✓ Lunas":"✗ Belum")+'</span>';
+        } else {
+          html+='<span style="font-size:11px;color:var(--muted);">Belum pesan</span>';
+        }
+        html+='</div>';
+        html+='</div>';
+      });
+      html+='</div>';
+    });
+  }
+  document.getElementById("kamar-content").innerHTML=html;
+}
+
+function renderSantriPage(){
+  document.getElementById("santri-stats").innerHTML=
+    '<div class="stat"><div class="n">'+santri.length+'</div><div class="l">Total santri</div></div>'
+    +'<div class="stat"><div class="n">'+[...new Set(santri.map(function(s){ return s.kamar; }))].length+'</div><div class="l">Kamar</div></div>'
+    +'<div class="stat"><div class="n">'+[...new Set(santri.map(function(s){ return s.kelas; }))].length+'</div><div class="l">Kelas</div></div>';
+  document.getElementById("btn-clear-santri").style.display=santri.length>0?"":"none";
+  document.getElementById("santri-search-wrap").style.display=santri.length>0?"":"none";
+  renderSantriTable(document.getElementById("santri-search")?document.getElementById("santri-search").value:"");
+  updateSantriHint();
+}
+
+function renderSantriTable(q){
+  q=q||"";
+  var filtered=q.trim()
+    ?santri.filter(function(s){ return s.nama.toLowerCase().indexOf(q.toLowerCase())>=0||s.kamar.toLowerCase().indexOf(q.toLowerCase())>=0||s.kelas.toLowerCase().indexOf(q.toLowerCase())>=0; })
+    :santri;
+  document.getElementById("santri-count-lbl").textContent="Daftar santri ("+filtered.length+")";
+  if(santri.length===0){
+    document.getElementById("santri-table-wrap").innerHTML='<div class="empty">Belum ada data santri.<br/>Upload file Excel di atas untuk memulai.</div>';
+    return;
+  }
+  document.getElementById("santri-table-wrap").innerHTML=
+    '<div class="tbl-scroll"><table class="tbl"><thead><tr><th>#</th><th>Nama</th><th>Kamar</th><th>Kelas</th><th></th></tr></thead><tbody>'
+    +filtered.map(function(s,i){
+      return '<tr><td style="color:var(--muted);font-size:11px">'+(i+1)+'</td>'
+        +'<td style="font-weight:600">'+escHtml(s.nama)+'</td>'
+        +'<td><span class="kamar-pill">'+escHtml(s.kamar)+'</span></td>'
+        +'<td><span class="kelas-pill">'+escHtml(s.kelas)+'</span></td>'
+        +'<td><button class="ibtn" onclick="removeSantri(\''+s.id+'\')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';
+    }).join("")+'</tbody></table></div>';
+}
+
+function removeSantri(id){ santri=santri.filter(function(s){ return s.id!==id; }); lsSave("sahur-santri-v1",santri); renderSantriPage();
+autoLoadSantri(); }
+function clearAllSantri(){ if(confirm("Hapus semua data santri?")){ santri=[]; lsSave("sahur-santri-v1",santri); renderSantriPage();
+autoLoadSantri(); } }
+
+var addModeOpen=false;
+function toggleAddMode(){
+  addModeOpen=!addModeOpen;
+  document.getElementById("add-mode-form").style.display=addModeOpen?"":"none";
+  if(!addModeOpen){ document.getElementById("new-nama").value=""; document.getElementById("new-kamar").value=""; document.getElementById("new-kelas").value=""; }
+}
+
+function addManual(){
+  var nama=document.getElementById("new-nama").value.trim();
+  var kamar=document.getElementById("new-kamar").value.trim();
+  var kelas=document.getElementById("new-kelas").value.trim();
+  if(!nama||!kamar||!kelas){ showToast("Lengkapi semua kolom.","err"); return; }
+  santri=santri.concat([{id:uid(),nama:nama,kamar:kamar,kelas:kelas}]);
+  lsSave("sahur-santri-v1",santri);
+  document.getElementById("new-nama").value=""; document.getElementById("new-kamar").value=""; document.getElementById("new-kelas").value="";
+  toggleAddMode();
+  renderSantriPage();
+autoLoadSantri();
+  showToast("Santri ditambahkan.");
+}
+
+// File import
+function onDragOver(e){ e.preventDefault(); document.getElementById("dropzone").classList.add("over"); }
+function onDragLeave(){ document.getElementById("dropzone").classList.remove("over"); }
+function onDrop(e){ e.preventDefault(); onDragLeave(); var f=e.dataTransfer.files[0]; if(f) parseFile(f); }
+function onFilePick(e){ var f=e.target.files[0]; if(f) parseFile(f); e.target.value=""; }
+
+function parseFile(file){
+  document.getElementById("file-loading").style.display="";
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=new Uint8Array(e.target.result);
+      var wb=XLSX.read(data,{type:"array"});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      if(rows.length<2){ showToast("File kosong atau tidak punya data.","err"); document.getElementById("file-loading").style.display="none"; return; }
+      var headers=rows[0].map(function(h){ return String(h).toLowerCase().trim(); });
+      var iNama=headers.findIndex(function(h){ return h.indexOf("nama")>=0; });
+      var iKamar=headers.findIndex(function(h){ return h.indexOf("kamar")>=0; });
+      var iKelas=headers.findIndex(function(h){ return h.indexOf("kelas")>=0||h.indexOf("klas")>=0; });
+      if(iNama<0||iKamar<0||iKelas<0){
+        showToast("Kolom Nama/Kamar/Kelas tidak ditemukan. Pastikan baris pertama adalah header.","err");
+        document.getElementById("file-loading").style.display="none"; return;
+      }
+      var parsed=rows.slice(1).filter(function(r){ return String(r[iNama]||"").trim(); }).map(function(r){
+        return {id:uid(),nama:String(r[iNama]).trim(),kamar:String(r[iKamar]).trim(),kelas:String(r[iKelas]).trim()};
+      });
+      santri=parsed;
+      lsSave("sahur-santri-v1",santri);
+      showToast(parsed.length+" data santri berhasil diimpor.");
+      renderSantriPage();
+autoLoadSantri();
+    }catch(err){
+      showToast("Gagal membaca file. Pastikan format .xlsx, .xls, atau .csv.","err");
+    }
+    document.getElementById("file-loading").style.display="none";
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ─── KELOLA MENU ──────────────────────────────────────────────────────────────
+var menuDraft=[];
+var menuDirty=false;
+
+function renderKelola(){
+  menuDraft=JSON.parse(JSON.stringify(menu));
+  menuDirty=false;
+  document.getElementById("kelola-dirty-bar").style.display="none";
+  renderMenuDraft();
+  renderOwnerDatalist();
+}
+
+function renderMenuDraft(){
+  document.getElementById("kelola-cats").innerHTML=CATS.map(function(cat){
+    return '<div class="card"><span class="lbl">'+cat+'</span>'
+      +menuDraft.filter(function(m){ return m.category===cat; }).map(function(m){
+        return '<div style="border-bottom:1px dashed var(--bdr);padding:9px 0">'
+          +'<div class="row" style="margin-bottom:'+(m.variants?6:0)+'px">'
+          +'<div style="flex:2"><input class="inp" value="'+escHtml(m.name)+'" oninput="menuDraftUpd(\''+m.id+'\',\'name\',this.value)"/></div>'
+          +'<div><input class="inp" list="own-list" value="'+escHtml(m.owner)+'" oninput="menuDraftUpd(\''+m.id+'\',\'owner\',this.value)"/></div>'
+          +(!m.variants?'<div style="max-width:120px"><input type="number" class="inp" value="'+m.price+'" oninput="menuDraftUpd(\''+m.id+'\',\'price\',this.value)"/></div>':"")
+          +'<button class="ibtn" onclick="menuDraftDel(\''+m.id+'\')">'
+          +'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'
+          +'</button></div>'
+          +(m.variants?'<div class="row">'+m.variants.map(function(v){ return '<div style="max-width:160px"><span class="lbl">'+escHtml(v.label)+'</span><input type="number" class="inp" value="'+v.price+'" oninput="menuDraftUpdVar(\''+m.id+'\',\''+v.label+'\',this.value)"/></div>'; }).join("")+'</div>':"")
+          +'</div>';
+      }).join("")+'</div>';
+  }).join("");
+}
+
+function markDirty(){ menuDirty=true; document.getElementById("kelola-dirty-bar").style.display=""; }
+function menuDraftUpd(id,field,val){
+  var m=menuDraft.find(function(x){ return x.id===id; });
+  if(m){ m[field]=field==="price"?Number(val)||0:val; markDirty(); }
+}
+function menuDraftUpdVar(id,lbl,val){
+  var m=menuDraft.find(function(x){ return x.id===id; });
+  if(m){ var v=m.variants&&m.variants.find(function(v){ return v.label===lbl; }); if(v){ v.price=Number(val)||0; markDirty(); } }
+}
+function menuDraftDel(id){ menuDraft=menuDraft.filter(function(m){ return m.id!==id; }); markDirty(); renderMenuDraft(); }
+
+function saveMenuDraft(){
+  menu=JSON.parse(JSON.stringify(menuDraft));
+  lsSave("sahur-menu-v1",menu);
+  menuDirty=false;
+  document.getElementById("kelola-dirty-bar").style.display="none";
+  renderMenuSelect();
+  renderOwnerDatalist();
+  showToast("Menu tersimpan.");
+}
+
+function renderOwnerDatalist(){
+  document.getElementById("own-list").innerHTML=getOwners().map(function(o){ return '<option value="'+escHtml(o)+'"/>'; }).join("");
+}
+
+var addMenuOpen=false;
+function toggleAddMenu(){
+  addMenuOpen=!addMenuOpen;
+  document.getElementById("add-menu-form").style.display=addMenuOpen?"":"none";
+  document.getElementById("btn-show-add-menu").style.display=addMenuOpen?"none":"";
+  if(!addMenuOpen){ document.getElementById("new-menu-name").value=""; document.getElementById("new-menu-owner").value=""; document.getElementById("new-menu-price").value=""; }
+}
+
+function addMenuNew(){
+  var name=document.getElementById("new-menu-name").value.trim();
+  var owner=document.getElementById("new-menu-owner").value.trim();
+  var cat=document.getElementById("new-menu-cat").value;
+  var price=Number(document.getElementById("new-menu-price").value)||0;
+  if(!name||!owner){ showToast("Nama dan pemilik wajib diisi.","err"); return; }
+  menuDraft.push({id:uid(),name:name,category:cat,owner:owner,price:price});
+  markDirty(); toggleAddMenu(); renderMenuDraft();
+}
+
+// ─── GOOGLE SHEETS SYNC (via Google Apps Script) ─────────────────────────────
+// URL GAS yang sudah di-deploy — ganti jika URL berubah
+var GAS_URL="https://script.google.com/macros/s/AKfycbx-dVo-ar5EE6_KNGROHIBPjqeihNersNJ0uYl2aPSJIVH6da056vrJ_iPj7B_4gOU/exec";
+var GAS_READY=false;
+
+function gsSetStatus(msg,type){
+  var el=document.getElementById("gs-status");
+  el.style.display="block";
+  el.style.color=type==="err"?"var(--err)":type==="ok"?"var(--ok)":"var(--muted)";
+  el.innerHTML=msg;
+}
+
+function autoLoadSantri(){
+  if(!GAS_URL||GAS_URL==="PLACEHOLDER_GAS_URL") return;
+  fetch(GAS_URL+"?action=getSantri")
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var rows=data;
+      if(!Array.isArray(rows)||rows.length<2){ return; }
+      var hdrs=rows[0].map(function(h){ return String(h).toLowerCase().trim(); });
+      var iNo=hdrs.findIndex(function(h){ return h==="no"||h==="#"; });
+      var iNama=hdrs.findIndex(function(h){ return h.includes("nama"); });
+      var iKamar=hdrs.findIndex(function(h){ return h.includes("kamar"); });
+      var iKelas=hdrs.findIndex(function(h){ return h.includes("kelas")||h.includes("klas"); });
+      if(iNama<0||iKamar<0||iKelas<0){ return; }
+      santri=rows.slice(1).filter(function(r){ return String(r[iNama]||"").trim(); })
+        .map(function(r){ return {id:uid(),nama:String(r[iNama]).trim(),kamar:String(r[iKamar]).trim(),kelas:String(r[iKelas]).trim()}; });
+      lsSave("sahur-santri-v1",santri);
+      GAS_READY=true;
+      updateSantriHint();
+      document.getElementById("hint-santri").textContent=santri.length+" santri siap.";
+      setTimeout(function(){ document.getElementById("hint-santri").style.display="none"; },2000);
+    })
+    .catch(function(e){ console.warn("GAS santri gagal:",e); });
+}
+
+function saveOrderToSheets(order){
+  if(!GAS_URL||GAS_URL==="PLACEHOLDER_GAS_URL") return;
+  fetch(GAS_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(order)
+  }).catch(function(e){ console.warn("Simpan ke Sheets gagal:",e); });
+}
+
+
+function parseCSV(text){
+  var rows=[], row=[], cur="", inQ=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(c==='"'){
+      if(inQ && text[i+1]==='"'){ cur+='"'; i++; }
+      else { inQ=!inQ; }
+    } else if(c===','&&!inQ){ row.push(cur); cur=""; }
+    else if((c==='\n'||c==='\r')&&!inQ){
+      row.push(cur); cur="";
+      if(row.some(function(x){ return x.trim(); })) rows.push(row);
+      row=[];
+      if(c==='\r'&&text[i+1]==='\n') i++;
+    } else { cur+=c; }
+  }
+  row.push(cur);
+  if(row.some(function(x){ return x.trim(); })) rows.push(row);
+  return rows;
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+initInput();
+document.getElementById("rekap-date").value=todayStr();
+document.getElementById("laporan-date").value=todayStr();
+document.getElementById("laporan-from").value=todayStr();
+document.getElementById("laporan-to").value=todayStr();
+renderSantriPage();
+autoLoadSantri();
+renderKelola();
+
+// Tampilkan status jika data santri sudah ada dari sesi sebelumnya
+if(santri.length>0){
+  gsSetStatus("&#10003; "+santri.length+" santri tersimpan dari sinkron sebelumnya. Klik <strong>Sinkron Sekarang</strong> untuk memperbarui.","ok");
+}
+</script>
+</body>
+</html>
