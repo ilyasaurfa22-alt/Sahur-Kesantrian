@@ -1006,12 +1006,28 @@ function gsSetStatus(msg,type){
   el.innerHTML=msg;
 }
 
+function parseCSVtoSantri(text){
+  var lines=text.trim().split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if(lines.length<2) return [];
+  var hdrs=lines[0].split(",").map(function(h){ return h.replace(/"/g,"").trim().toLowerCase(); });
+  var iNama=hdrs.findIndex(function(h){ return h.includes("nama"); });
+  var iKamar=hdrs.findIndex(function(h){ return h.includes("kamar"); });
+  var iKelas=hdrs.findIndex(function(h){ return h.includes("kelas")||h.includes("klas"); });
+  if(iNama<0||iKamar<0||iKelas<0) return null;
+  return lines.slice(1).map(function(l){
+    var cols=l.split(",").map(function(c){ return c.replace(/"/g,"").trim(); });
+    return {id:uid(),nama:cols[iNama]||"",kamar:cols[iKamar]||"",kelas:cols[iKelas]||""};
+  }).filter(function(s){ return s.nama; });
+}
+
 function autoLoadSantri(){
   if(!GAS_URL||GAS_URL==="PLACEHOLDER_GAS_URL") return;
   var hintEl=document.getElementById("hint-santri");
   if(hintEl) hintEl.textContent="Memuat data santri...";
 
-  fetch(GAS_URL+"?action=getSantri",{redirect:"follow"})
+  // Gunakan no-cors tidak bisa baca body, pakai teknik lain
+  // GAS dengan redirect perlu dipanggil tanpa mode restriction
+  fetch(GAS_URL+"?action=getSantri")
     .then(function(r){
       if(!r.ok) throw new Error("HTTP "+r.status);
       return r.json();
@@ -1049,16 +1065,32 @@ function autoLoadSantri(){
       if(activeTab&&activeTab.dataset.tab==="kamar") renderKamarPage();
     })
     .catch(function(e){
-      console.warn("GAS santri gagal:",e);
-      // Fallback: coba load dari localStorage
+      console.warn("GAS santri gagal:",e.message);
+      // Fallback 1: coba dari cache localStorage
       var cached=lsGet("sahur-santri-v1",[]);
       if(cached.length>0){
         santri=cached;
         if(hintEl) hintEl.textContent=santri.length+" santri (dari cache).";
         setTimeout(function(){ if(hintEl) hintEl.style.display="none"; },2000);
-      } else {
-        if(hintEl) hintEl.textContent="Gagal memuat santri. Cek koneksi.";
+        return;
       }
+      // Fallback 2: coba CSV published URL langsung via proxy
+      if(hintEl) hintEl.textContent="Mencoba cara lain...";
+      var csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vS1x6vvW9-i4685Tqt2jdL_ofDyCnBoFqhsS0V965DZmmmI7O70er3QWkTFerqO2cp9bdl8oT_vqmLc/pub?output=csv";
+      var proxyUrl="https://api.allorigins.win/raw?url="+encodeURIComponent(csvUrl);
+      fetch(proxyUrl)
+        .then(function(r){ return r.text(); })
+        .then(function(txt){
+          var parsed=parseCSVtoSantri(txt);
+          if(parsed&&parsed.length>0){
+            santri=parsed;
+            lsSave("sahur-santri-v1",santri);
+            if(hintEl){ hintEl.textContent=santri.length+" santri siap."; setTimeout(function(){ if(hintEl) hintEl.style.display="none"; },2000); }
+          } else {
+            if(hintEl) hintEl.textContent="Gagal memuat santri.";
+          }
+        })
+        .catch(function(){ if(hintEl) hintEl.textContent="Gagal memuat santri."; });
     });
 }
 
