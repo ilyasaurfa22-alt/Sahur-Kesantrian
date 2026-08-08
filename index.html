@@ -249,7 +249,7 @@ h1,h2,h3{font-family:'Lexend',sans-serif;}
     </div>
 
     <!-- TAB: KELOLA MENU -->
-    <div class="tab-panel" id="panel-kamar" style="display:none;">
+    <div class="tab-panel" id="panel-kamar">
   <div class="card">
     <label class="lbl">Pilih Tanggal</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -336,6 +336,9 @@ const DEFAULT_MENU=[
 const CATS=["Utama","Tambahan","Minuman"];
 
 function lsLoad(key,def){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function lsGet(key,def){
+  try{ var v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; }
+}
 function lsSave(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); }catch(e){ showToast("Gagal menyimpan data.","err"); } }
 
 let menu   = lsLoad("sahur-menu-v1",  DEFAULT_MENU);
@@ -1005,26 +1008,58 @@ function gsSetStatus(msg,type){
 
 function autoLoadSantri(){
   if(!GAS_URL||GAS_URL==="PLACEHOLDER_GAS_URL") return;
-  fetch(GAS_URL+"?action=getSantri")
-    .then(function(r){ return r.json(); })
+  var hintEl=document.getElementById("hint-santri");
+  if(hintEl) hintEl.textContent="Memuat data santri...";
+
+  fetch(GAS_URL+"?action=getSantri",{redirect:"follow"})
+    .then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    })
     .then(function(data){
-      var rows=data;
-      if(!Array.isArray(rows)||rows.length<2){ return; }
+      var rows=Array.isArray(data)?data:[];
+      if(rows.length<2){
+        if(hintEl) hintEl.textContent="Data santri kosong.";
+        return;
+      }
       var hdrs=rows[0].map(function(h){ return String(h).toLowerCase().trim(); });
-      var iNo=hdrs.findIndex(function(h){ return h==="no"||h==="#"; });
       var iNama=hdrs.findIndex(function(h){ return h.includes("nama"); });
       var iKamar=hdrs.findIndex(function(h){ return h.includes("kamar"); });
       var iKelas=hdrs.findIndex(function(h){ return h.includes("kelas")||h.includes("klas"); });
-      if(iNama<0||iKamar<0||iKelas<0){ return; }
-      santri=rows.slice(1).filter(function(r){ return String(r[iNama]||"").trim(); })
-        .map(function(r){ return {id:uid(),nama:String(r[iNama]).trim(),kamar:String(r[iKamar]).trim(),kelas:String(r[iKelas]).trim()}; });
+      if(iNama<0||iKamar<0||iKelas<0){
+        if(hintEl) hintEl.textContent="Header kolom tidak ditemukan di Sheets.";
+        return;
+      }
+      santri=rows.slice(1)
+        .filter(function(r){ return String(r[iNama]||"").trim(); })
+        .map(function(r){
+          return {
+            id:uid(),
+            nama:String(r[iNama]).trim(),
+            kamar:String(r[iKamar]).trim(),
+            kelas:String(r[iKelas]).trim()
+          };
+        });
       lsSave("sahur-santri-v1",santri);
       GAS_READY=true;
-      updateSantriHint();
-      document.getElementById("hint-santri").textContent=santri.length+" santri siap.";
-      setTimeout(function(){ document.getElementById("hint-santri").style.display="none"; },2000);
+      if(hintEl){ hintEl.textContent=santri.length+" santri siap."; setTimeout(function(){ hintEl.style.display="none"; },2000); }
+      console.log("Santri loaded:",santri.length);
+      // Refresh laporan kamar jika sedang aktif
+      var activeTab=document.querySelector(".tab.on");
+      if(activeTab&&activeTab.dataset.tab==="kamar") renderKamarPage();
     })
-    .catch(function(e){ console.warn("GAS santri gagal:",e); });
+    .catch(function(e){
+      console.warn("GAS santri gagal:",e);
+      // Fallback: coba load dari localStorage
+      var cached=lsGet("sahur-santri-v1",[]);
+      if(cached.length>0){
+        santri=cached;
+        if(hintEl) hintEl.textContent=santri.length+" santri (dari cache).";
+        setTimeout(function(){ if(hintEl) hintEl.style.display="none"; },2000);
+      } else {
+        if(hintEl) hintEl.textContent="Gagal memuat santri. Cek koneksi.";
+      }
+    });
 }
 
 function saveOrderToSheets(order){
